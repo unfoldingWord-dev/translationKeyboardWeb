@@ -7,8 +7,10 @@
   <h4><%= @selected_keyboard_variant.name %></h4>
   <h4><span class="glyphicon <%= @selected_keyboard_variant.keyboard_type.icon_class %>"></span> <%= @selected_keyboard_variant.keyboard_type.name %></h4>
     </div>
+
     <div class="col-xs-7 keyboard-edit-btn">
     <button type="button" class="btn btn-primary pull-right edit-keyboard">Edit Keyboard</button>
+      <button type="button" class="btn pull-right view-qr" data-nav-url="<%= root_url.to_s + '/qrs/qr-' + @selected_keyboard_variant.id.to_s  + '.png'   %>">View Keyboard QR</button>
 </div>
   </div>
 
@@ -25,6 +27,7 @@
 
 
   </div>
+
 
 
   <div class="type-area">

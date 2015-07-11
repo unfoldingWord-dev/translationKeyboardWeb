@@ -204,3 +204,7 @@ width: 25px;
 .unicode-edit-text {
     padding-top: 5%;
 }
+
+#region_code_modal ul.col-md-4 {
+    margin-bottom:0;
+}

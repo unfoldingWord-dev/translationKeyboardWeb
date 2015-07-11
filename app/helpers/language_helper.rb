@@ -13,8 +13,10 @@ module LanguageHelper
     arr[0] = region_id
     country = KeyboardCountry.where(:cc => arr).first
     country_lang = LangRegions.where(:keyboardCountry_id => country).first
-    lang_id = country_lang.keyboardLanguages_id
-    @region_name = KeyboardLanguages.find(lang_id).lr
+    if !country_lang.nil?
+      lang_id = country_lang.keyboardLanguages_id
+      @region_name = KeyboardLanguages.find(lang_id).lr
+    end
 
     sql = 'SELECT kc.cc,kl.lr FROM keyboard_countries kc, keyboard_languages kl, (SELECT DISTINCT ON("keyboardCountry_id") "keyboardCountry_id", "keyboardLanguages_id" FROM lang_regions ORDER BY "keyboardCountry_id") lg WHERE kc.id=lg."keyboardCountry_id" AND kl.id=lg."keyboardLanguages_id";'
     @all_regions = ActiveRecord::Base.connection.execute(sql)

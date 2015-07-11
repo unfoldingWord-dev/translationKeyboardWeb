@@ -1,5 +1,6 @@
 class KeyboardController < ApplicationController
   require 'rqrcode'
+  require 'zip'
   autocomplete :keyboard_languages, :lc, :full=> true, :extra_data => [:ln], :display_value => :funky_method
   before_action :authenticate_user!
   def index
@@ -87,7 +88,7 @@ class KeyboardController < ApplicationController
     @parent_keyboard = @selected_keyboard_variant.keyboard
     @parent_keyboard_list = Keyboard.where(id: @parent_keyboard.id)
     set_key_positions
-    set_qr_code
+    set_qr_code @selected_keyboard_variant.id
 
     render 'keyboard/index'
   end
@@ -237,16 +238,36 @@ class KeyboardController < ApplicationController
     params.require(:keyboard).permit(:name, :iso_language, :iso_region)
   end
 
-  def set_qr_code
+  def set_qr_code keyboard_id
 
 
     url_contents = Net::HTTP.get(URI.parse('http://remote.actsmedia.com/api/v3/keyboard/' + @parent_keyboard.id.to_s))
-    qr_generation_string = url_contents.to_s
-    qr_generation_string = qr_generation_string.gsub('{', '$')
-    qr_generation_string = qr_generation_string.gsub('}', '%')
-    qr_generation_string = qr_generation_string.gsub('[', '*')
-    qr_generation_string = qr_generation_string.gsub(']', '+')
-    qr_generation_string = qr_generation_string.gsub('"', '-')
+
+    # qr_generation_string = url_contents.to_s
+    # qr_generation_string = qr_generation_string.gsub('{', '$')
+    # qr_generation_string = qr_generation_string.gsub('}', '%')
+    # qr_generation_string = qr_generation_string.gsub('[', '*')
+    # qr_generation_string = qr_generation_string.gsub(']', '+')
+    # qr_generation_string = qr_generation_string.gsub('"', '-')
+
+    qr_path = Rails.root.join('public', 'qrs')
+    dirname = File.dirname(qr_path)
+    unless File.directory?(dirname)
+      FileUtils.mkdir_p(dirname)
+    end
+
+    file_to_zip = Rails.root.join('public', 'qrs', 'tmp-'+keyboard_id.to_s+'.json')
+    zipped_file = Rails.root.join('public', 'qrs', 'tmp-'+keyboard_id.to_s+'.json.zip')
+
+    FileUtils.rm(zipped_file)
+
+    File.write(file_to_zip, url_contents)
+    Zip::File.open(zipped_file, Zip::File::CREATE) do |zipfile|
+      zipfile.add('keyboard.json', file_to_zip)
+    end
+
+    content = File.binread(zipped_file)
+    encoded = Base64.encode64(content)
 
     # some_params = {'cht'=>'qr','chs'=>'500x500','chl'=> qr_generation_string}
     # uri = URI('https://chart.googleapis.com/chart')
@@ -257,9 +278,19 @@ class KeyboardController < ApplicationController
     # end
 
     #@qrcode = RQRCode::QRCode.new(qr_generation_string)
-    @qr_string = qr_generation_string
-    @qrcode = RQRCode::QRCode.new(url_contents, :size => 40, :level => :l).as_png(:size => 3000).save(Rails.root.join('public', 'qr.png'))
+
+    # @qr_string = qr_generation_string
+    # if url_contents.length > 2000
+    #   RQRCode::QRCode.new(url_contents[0..2000], :size => 40, :level => :l).as_png(:size => 3000).save(Rails.root.join('public', 'qr1.png'))
+    #   RQRCode::QRCode.new(url_contents[2001..url_contents.length], :size => 40, :level => :l).as_png(:size => 3000).save(Rails.root.join('public', 'qr2.png'))
+    # else
+    #   @qrcode = RQRCode::QRCode.new(url_contents, :size => 40, :level => :l).as_png(:size => 3000).save(Rails.root.join('public', 'qr1.png'))
+    # end
     #@qrcode = RQRCode::QRCode.new('http://remote.actsmedia.com/api/v3/keyboard/' + @parent_keyboard.id.to_s)
+
+
+    RQRCode::QRCode.new(encoded, :size => 40, :level => :l).as_png(:size => 3000).save(Rails.root.join('public', 'qrs', 'qr-'+keyboard_id.to_s+'.png'))
+
   end
 
 end

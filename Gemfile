@@ -51,6 +51,8 @@ gem 'language_list'
 gem 'chunky_png'
 gem 'rqrcode'
 
+gem 'rubyzip'
+
 # Use ActiveModel has_secure_password
 # gem 'bcrypt', '~> 3.1.7'
 
